@@ -1,4 +1,3 @@
-
 name: Aga Global Tech - Flet Lens AI
 on: [push]
 
@@ -8,33 +7,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Install Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.0'
+          # ALIGNED WITH FLET 0.84.0 REQUIREMENTS
+          flutter-version: '3.41.4'
 
-      - name: Install Build Tools
-        run: |
-          pip install flet ultralytics numpy==1.26.2
+      - name: Install Flet CLI
+        run: pip install flet
 
       - name: YOLO26 Model Factory
         run: |
-          # Export to INT8 TFLite for low-end hardware efficiency
+          pip install ultralytics numpy==1.26.2
           yolo export model=yolo26n.pt format=tflite int8=True
           mkdir -p assets
-          # Find and move the converted model to assets
           cp $(find . -name "*_int8.tflite") assets/yolo26n.tflite
 
       - name: Build APK
         run: |
-          # Serious Python + Flet CLI handles the heavy lifting
-          flet build apk \
+          # 'yes |' handles the interactive prompt that caused the EOFError
+          yes | flet build apk \
             --project "Lens AI" \
             --product "Lens AI" \
             --org "tech.agaglobal" \
