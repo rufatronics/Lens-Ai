@@ -1,1 +1,48 @@
 
+name: Aga Global Tech - Flet Lens AI
+on: [push]
+
+jobs:
+  android_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.22.0'
+
+      - name: Install Build Tools
+        run: |
+          pip install flet ultralytics numpy==1.26.2
+
+      - name: YOLO26 Model Factory
+        run: |
+          # Export to INT8 TFLite for low-end hardware efficiency
+          yolo export model=yolo26n.pt format=tflite int8=True
+          mkdir -p assets
+          # Find and move the converted model to assets
+          cp $(find . -name "*_int8.tflite") assets/yolo26n.tflite
+
+      - name: Build APK
+        run: |
+          # Serious Python + Flet CLI handles the heavy lifting
+          flet build apk \
+            --project "Lens AI" \
+            --product "Lens AI" \
+            --org "tech.agaglobal" \
+            --description "Aga Global Sovereignty Vision Intelligence"
+
+      - name: Upload Finalized APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LensAI-Sovereignty-Edition
+          path: build/apk/*.apk
+          
