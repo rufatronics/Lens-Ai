@@ -1,4 +1,4 @@
-name: Aga Global Tech - Lens AI Build
+name: Aga Global Tech - Lens AI Stable Build
 on: [push]
 
 jobs:
@@ -7,64 +7,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Install Linux System Dependencies 
-      # Flutter build tools need these even when targeting Android
+      # 1. Linux headers required for the Flutter engine initialization
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libglu1-mesa-dev mesa-utils xvfb
 
-      # 2. Setup Java 17 
-      # Mandatory for the Android Gradle toolchain in 2026
+      # 2. JDK 17 is mandatory for 2026 Android toolchains
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # 3. Setup Python
       - name: Install Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # 4. Setup Flutter 
-      # Matched to Flet 0.84.0 requirements
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.41.4'
 
-      # 5. CRITICAL: Accept Android Licenses
-      # This fixes the EOFError/Doctor failure by auto-typing "y"
+      # 3. Legal Gatekeeper: Auto-accept Google's licenses
       - name: Accept Android Licenses
         run: yes | flutter doctor --android-licenses
 
-      # 6. Install Build Tools
-      - name: Install Flet CLI & Ultralytics
+      - name: Install Flet CLI & AI Tools
         run: pip install flet ultralytics numpy==1.26.2
 
-      # 7. YOLO26 Model Factory (Synaptic DNA)
-      # Exporting to INT8 TFLite for 4GB RAM / Celeron optimization
+      # 4. YOLO26 Synaptic DNA Model Factory
       - name: YOLO26 Model Factory
         run: |
           yolo export model=yolo26n.pt format=tflite int8=True
           mkdir -p assets
-          # Find the INT8 model and move it to assets for Flet to bundle
           cp $(find . -name "*_int8.tflite") assets/yolo26n.tflite
 
-      # 8. Build the APK
-      # The Flet CLI handles the Serious Python packaging
+      # 5. Build the APK using the Serious Python engine
       - name: Build APK
         run: |
+          # The Flet CLI will now find the 'opencv-python' mobile wheel
           flet build apk \
             --project "Lens AI" \
             --product "Lens AI" \
             --org "tech.agaglobal" \
-            --description "Aga Global Sovereignty Vision Intelligence"
+            --verbose
 
-      # 9. Upload the Final Artifact
       - name: Upload Finalized APK
         uses: actions/upload-artifact@v4
         with:
