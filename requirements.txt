@@ -1,4 +1,5 @@
 flet
-opencv-python-headless
+opencv-python
 tflite-runtime
 numpy==1.26.2
+
