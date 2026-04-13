@@ -1,4 +1,4 @@
-name: Aga Global Tech - Flet Lens AI
+name: Aga Global Tech - Lens AI Build
 on: [push]
 
 jobs:
@@ -7,36 +7,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      # FIX: Install the headers the Doctor is crying about
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libglu1-mesa-dev mesa-utils xvfb
 
-      - name: Install Flutter
+      # JDK 17 is mandatory for 2026 Android builds
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # FIX: Manually install the exact Flutter SDK Flet 0.84.0 wants
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # ALIGNED WITH FLET 0.84.0 REQUIREMENTS
           flutter-version: '3.41.4'
 
       - name: Install Flet CLI
-        run: pip install flet
+        run: pip install flet ultralytics numpy==1.26.2
 
       - name: YOLO26 Model Factory
         run: |
-          pip install ultralytics numpy==1.26.2
+          # Export to INT8 (Synaptic DNA mode)
           yolo export model=yolo26n.pt format=tflite int8=True
           mkdir -p assets
           cp $(find . -name "*_int8.tflite") assets/yolo26n.tflite
 
-      - name: Build APK
+      - name: Build APK (Non-Interactive)
         run: |
-          # 'yes |' handles the interactive prompt that caused the EOFError
-          yes | flet build apk \
+          # Use printf to force 'yes' into the process if it still asks
+          printf 'y\n' | flet build apk \
             --project "Lens AI" \
             --product "Lens AI" \
             --org "tech.agaglobal" \
-            --description "Aga Global Sovereignty Vision Intelligence"
+            --verbose
 
       - name: Upload Finalized APK
         uses: actions/upload-artifact@v4
