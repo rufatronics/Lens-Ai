@@ -28,7 +28,7 @@ jobs:
         run: yes | flutter doctor --android-licenses
 
       - name: Install Build Tools
-        run: pip install flet ultralytics numpy==1.26.2
+        run: pip install flet ultralytics numpy==1.26.4
 
       - name: YOLO26 ONNX Factory
         run: |
