@@ -7,45 +7,64 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # FIX: Install the headers the Doctor is crying about
+      # 1. Install Linux System Dependencies 
+      # Flutter build tools need these even when targeting Android
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libglu1-mesa-dev mesa-utils xvfb
 
-      # JDK 17 is mandatory for 2026 Android builds
+      # 2. Setup Java 17 
+      # Mandatory for the Android Gradle toolchain in 2026
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # FIX: Manually install the exact Flutter SDK Flet 0.84.0 wants
+      # 3. Setup Python
+      - name: Install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 4. Setup Flutter 
+      # Matched to Flet 0.84.0 requirements
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.41.4'
 
-      - name: Install Flet CLI
+      # 5. CRITICAL: Accept Android Licenses
+      # This fixes the EOFError/Doctor failure by auto-typing "y"
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses
+
+      # 6. Install Build Tools
+      - name: Install Flet CLI & Ultralytics
         run: pip install flet ultralytics numpy==1.26.2
 
+      # 7. YOLO26 Model Factory (Synaptic DNA)
+      # Exporting to INT8 TFLite for 4GB RAM / Celeron optimization
       - name: YOLO26 Model Factory
         run: |
-          # Export to INT8 (Synaptic DNA mode)
           yolo export model=yolo26n.pt format=tflite int8=True
           mkdir -p assets
+          # Find the INT8 model and move it to assets for Flet to bundle
           cp $(find . -name "*_int8.tflite") assets/yolo26n.tflite
 
-      - name: Build APK (Non-Interactive)
+      # 8. Build the APK
+      # The Flet CLI handles the Serious Python packaging
+      - name: Build APK
         run: |
-          # Use printf to force 'yes' into the process if it still asks
-          printf 'y\n' | flet build apk \
+          flet build apk \
             --project "Lens AI" \
             --product "Lens AI" \
             --org "tech.agaglobal" \
-            --verbose
+            --description "Aga Global Sovereignty Vision Intelligence"
 
+      # 9. Upload the Final Artifact
       - name: Upload Finalized APK
         uses: actions/upload-artifact@v4
         with:
