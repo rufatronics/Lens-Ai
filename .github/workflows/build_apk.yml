@@ -51,7 +51,7 @@ jobs:
           name: LensAI-Sovereignty-Edition
           path: build/apk/*.apk
          
-          - name: Teleport APK to Appetize
+      - name: Teleport APK to Appetize
         run: |
           # We send the APK directly to Appetize via their API
           # This returns a 'publicKey' which is your app's ID
