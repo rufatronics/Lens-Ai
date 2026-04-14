@@ -50,4 +50,14 @@ jobs:
         with:
           name: LensAI-Sovereignty-Edition
           path: build/apk/*.apk
+         
+          - name: Teleport APK to Appetize
+        run: |
+          # We send the APK directly to Appetize via their API
+          # This returns a 'publicKey' which is your app's ID
+          RESPONSE=$(curl https://${{ secrets.APPETIZE_TOKEN }}@api.appetize.io/v1/apps \
+            -F "file=@build/apk/app-release.apk" \
+            -F "platform=android")
+          
+          echo "App is live! View it here: https://appetize.io/app/$(echo $RESPONSE | jq -r '.publicKey')"
           
